@@ -44,12 +44,12 @@ function create_player()
         x = 64, y = 64,
         w = 8, h = 8,
         dx = 0, dy = 0,
-        speed = 1,                -- 基础速度
+        speed = 0.4,                -- 基础速度
         run_mult = 2,             -- 按住 X 的加速倍数
         gravity = 0.2,
         max_fall = 4,             -- 最大下落速度
-        base_jump = -3,           -- 基础跳跃力量（负值向上）
-        max_charge = 4,           -- 最大蓄力值
+        base_jump = -2,           -- 基础跳跃力量（负值向上）
+        max_charge = 3,           -- 最大蓄力值
         jump_charge = 1.5,        -- 当前蓄力
         jump_request = false,     -- 请求跳跃
         o_prev = false,           -- 上一帧 O 键状态
@@ -190,7 +190,7 @@ function update_sprite(p)
         if p.dx == 0 then
             p.spr = 64   -- 站立
         else
-            p.spr = 69   -- 跑动（可替换为动画）
+            p.spr = 64   -- 跑动（可替换为动画）
         end
     else
         if p.dy < 0 then
