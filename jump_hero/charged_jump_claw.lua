@@ -4,10 +4,9 @@
 page = 0          -- 0: 开始页, 1: 游戏中
 player = nil
 ground_y = 100    -- 地面高度（备用）
-data1 = 0         -- 调试用，可删除
-title_charge = 0  -- 标题页蓄力动画
 camera_x = 0      -- 摄像机水平位置
 map_width = 128   -- 地图宽度（以 tile 为单位，128*8=1024像素）
+title_time = 0    -- 标题页动画计时器
 
 function _init()
     player = create_player()
@@ -67,12 +66,11 @@ function _draw()
         -- 标题上下浮动动画
         local title_y = 20 + sin(title_time * 0.05) * 3
         
-        -- 绘制标题 "JUMP HERO"
-        draw_text_shadow("JUMP", 38, title_y, 7)
-        draw_text_shadow("HERO", 42, title_y + 10, 8)
+        -- 绘制标题 "JUMP HERO" (放大版)
+        draw_large_title(title_y)
         
         -- 绘制跳跃的小人预览
-        local bob_y = 70 + sin(title_time * 0.1) * 4
+        local bob_y = 85 + sin(title_time * 0.1) * 4
         local jump_frame = flr(title_time / 10) % 4
         local preview_spr = 64 + jump_frame
         if (jump_frame == 2 or jump_frame == 3) then
@@ -104,11 +102,50 @@ function _draw()
     end
 end
 
--- 带阴影的文字绘制
-function draw_text_shadow(txt, x, y, col)
-    print(txt, x - 1, y, 0)  -- 阴影
-    print(txt, x, y - 1, 0)
-    print(txt, x, y, col)
+-- 绘制放大版标题 (彩虹色)
+function draw_large_title(y)
+    local colors = {8, 9, 10, 11, 12, 13, 14, 15}
+    local start_x = 20
+    
+    -- JUMP (彩色)
+    draw_big_char("J", start_x, y, colors[1])
+    draw_big_char("U", start_x + 18, y, colors[1])
+    draw_big_char("M", start_x + 36, y, colors[1])
+    draw_big_char("P", start_x + 54, y, colors[1])
+    
+    -- HERO (彩色)
+    draw_big_char("H", start_x + 14, y + 16, colors[3])
+    draw_big_char("E", start_x + 32, y + 16, colors[3])
+    draw_big_char("R", start_x + 50, y + 16, colors[3])
+    draw_big_char("O", start_x + 68, y + 16, colors[3])
+end
+
+-- 绘制单个大字符 (1.5x 放大)
+function draw_big_char(char, x, y, col)
+    local patterns = {
+        ["J"] = {1,1,1, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 1,1,0},
+        ["U"] = {1,0,1, 1,0,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1},
+        ["M"] = {1,0,1, 1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,0,1},
+        ["P"] = {1,1,1, 1,0,1, 1,1,1, 1,0,0, 1,0,0},
+        ["H"] = {1,0,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1, 1,0,1},
+        ["E"] = {1,1,1, 1,0,0, 1,1,1, 1,0,0, 1,0,0, 1,1,1},
+        ["R"] = {1,1,1, 1,0,1, 1,1,1, 1,1,0, 1,0,1, 1,0,1},
+        ["O"] = {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}
+    }
+    
+    local p = patterns[char]
+    if not p then return end
+    
+    for i = 1, #p do
+        if p[i] == 1 then
+            local row = flr((i - 1) / 3)
+            local c = (i - 1) % 3
+            -- 1.5x 放大，使用传入的颜色
+            pset(x + c * 2, y + row * 2, col)
+            pset(x + c * 2 + 1, y + row * 2, col)
+            pset(x + c * 2, y + row * 2 + 1, col)
+        end
+    end
 end
 
 -- 更新摄像机跟随玩家
@@ -130,20 +167,20 @@ function create_player()
         x = 64, y = 64,
         w = 8, h = 8,
         dx = 0, dy = 0,
-        speed = 0.3,                -- 基础速度
-        run_mult = 2,               -- 按住 X 的加速倍数
+        speed = 0.3,               -- 基础速度
+        run_mult = 2,              -- 按住 X 的加速倍数
         gravity = 0.2,
-        max_fall = 4,               -- 最大下落速度
-        base_jump = -1.5,             -- 基础跳跃力量（负值向上）
-        max_charge = 3.5,             -- 最大蓄力值
-        jump_charge = 1.5,          -- 当前蓄力
-        jump_request = false,       -- 请求跳跃
-        o_prev = false,             -- 上一帧 O 键状态
+        max_fall = 4,              -- 最大下落速度
+        base_jump = -1.5,          -- 基础跳跃力量（负值向上）
+        max_charge = 3.5,          -- 最大蓄力值
+        jump_charge = 1.5,         -- 当前蓄力
+        jump_request = false,      -- 请求跳跃
+        o_prev = false,            -- 上一帧 O 键状态
         is_grounded = false,
-        is_charging = false,        -- 当前是否正在蓄力
+        is_charging = false,       -- 当前是否正在蓄力
         flip_x = false,
         direction = 1,
-        spr = 64,                   -- 当前精灵
+        spr = 64,                  -- 当前精灵
         hp = 3,
         max_hp = 3,
         invincible = 0,
